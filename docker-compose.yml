@@ -1,0 +1,41 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+
+  airflow:
+    build: .
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: 'postgresql+psycopg2://airflow:airflow@postgres/airflow'
+      AIRFLOW__CORE__EXECUTOR: 'LocalExecutor'
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scripts:/opt/airflow/scripts
+      - ./logs:/opt/airflow/logs
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    command: ["airflow", "scheduler"]
+
+  airflow-webserver:
+    image: apache/airflow:2.1.2
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: 'postgresql+psycopg2://airflow:airflow@postgres/airflow'
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scripts:/opt/airflow/scripts
+      - ./logs:/opt/airflow/logs
+    ports:
+      - "8081:8080"
+    depends_on:
+      - airflow
+    command: ["airflow", "webserver"]
